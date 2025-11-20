@@ -1,4 +1,5 @@
-import {ICUASTNode, ICUToken, ICUUtil} from "../src";
+import type { ICUASTNode, ICUToken } from '../src'
+import { ICUUtil } from '../src'
 
 type ExampleValues = {
   name: string,
@@ -40,14 +41,14 @@ const examples: ExampleValues[] = [
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: '=1' },
       { type: 'LBRACE' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'apple' },
       { type: 'RBRACE' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'other' },
       { type: 'LBRACE' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'apples' },
       { type: 'RBRACE' },
@@ -62,8 +63,20 @@ const examples: ExampleValues[] = [
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': { type: 'Text', value: '# apple' },
-            'other': { type: 'Text', value: '# apples' }
+            '=1': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' apple' }
+              ]
+            },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' apples' }
+              ]
+            }
           }
         }
       ]
@@ -166,7 +179,7 @@ const examples: ExampleValues[] = [
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'other' },
       { type: 'LBRACE' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'items' },
       { type: 'RBRACE' },
@@ -202,7 +215,12 @@ const examples: ExampleValues[] = [
           options: {
             '=0': { type: 'Text', value: 'no items' },
             '=1': { type: 'Text', value: 'one item' },
-            'other': { type: 'Text', value: '# items' }
+            'other': {
+              type: 'Node', parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' items' }
+              ]
+            }
           }
         },
         { type: 'Text', value: ' and ' },
@@ -252,7 +270,7 @@ const examples: ExampleValues[] = [
       { type: 'TEXT', value: 'Admin' },
       { type: 'COMMA' },
       { type: 'WHITESPACE', value: ' ' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'messages' },
       { type: 'RBRACE' },
@@ -283,7 +301,7 @@ const examples: ExampleValues[] = [
       { type: 'TEXT', value: 'Member' },
       { type: 'COMMA' },
       { type: 'WHITESPACE', value: ' ' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'messages' },
       { type: 'RBRACE' },
@@ -307,7 +325,14 @@ const examples: ExampleValues[] = [
           variableName: 'count',
           options: {
             '=1': { type: 'Text', value: 'Admin, 1 message' },
-            'other': { type: 'Text', value: 'Admin, # messages' }
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'Text', value: 'Admin, ' },
+                { type: 'NumberField' },
+                { type: 'Text', value: ' messages' }
+              ]
+            }
           }
         },
         member: {
@@ -316,7 +341,14 @@ const examples: ExampleValues[] = [
           variableName: 'count',
           options: {
             '=1': { type: 'Text', value: 'Member, 1 message' },
-            'other': { type: 'Text', value: 'Member, # messages' }
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'Text', value: 'Member, ' },
+                { type: 'NumberField' },
+                { type: 'Text', value: ' messages' }
+              ]
+            }
           }
         },
         other: { type: 'Text', value: 'Guest' }
@@ -330,7 +362,13 @@ const examples: ExampleValues[] = [
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'is' },
       { type: 'WHITESPACE', value: ' ' },
-      { type: 'TEXT', value: '{special}' },
+      { type: 'ESCAPE' },
+      { type: 'LBRACE' },
+      { type: 'ESCAPE' },
+      { type: 'TEXT', value: 'special' },
+      { type: 'ESCAPE' },
+      { type: 'RBRACE' },
+      { type: 'ESCAPE' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'and' },
       { type: 'WHITESPACE', value: ' ' },
@@ -347,14 +385,14 @@ const examples: ExampleValues[] = [
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: '=1' },
       { type: 'LBRACE' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'cat' },
       { type: 'RBRACE' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'other' },
       { type: 'LBRACE' },
-      { type: 'TEXT', value: '#' },
+      { type: 'HASHTAG' },
       { type: 'WHITESPACE', value: ' ' },
       { type: 'TEXT', value: 'cats' },
       { type: 'RBRACE' },
@@ -369,8 +407,20 @@ const examples: ExampleValues[] = [
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': { type: 'Text', value: '# cat' },
-            'other': { type: 'Text', value: '# cats' }
+            '=1': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' cat' }
+              ]
+            },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' cats' }
+              ]
+            }
           }
         }
       ]
@@ -379,9 +429,17 @@ const examples: ExampleValues[] = [
   {
     name: 'Escape sequence',
     input: [
-      { type: 'TEXT', value: "'''" },
+      { type: 'ESCAPE' },
+      { type: 'ESCAPE' },
+      { type: 'ESCAPE' },
+      { type: 'ESCAPE' },
+      { type: 'ESCAPE' },
+      { type: 'ESCAPE' },
       { type: 'WHITESPACE', value: ' ' },
-      { type: 'TEXT', value: '{}' },
+      { type: 'ESCAPE' },
+      { type: 'LBRACE' },
+      { type: 'RBRACE' },
+      { type: 'ESCAPE' },
     ],
     result: {
       type: 'Text',
@@ -394,6 +452,7 @@ describe('ICU Parser', () => {
   for (const example of examples) {
     test(`${example.name}:`, () => {
       const result = ICUUtil.parse(example.input)
+      console.log(result)
       expect(result).toEqual(example.result)
     })
   }

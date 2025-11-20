@@ -1,4 +1,5 @@
-import {ICUASTNode, ICUCompilerValues, ICUUtil} from "../src";
+import type { ICUASTNode, ICUCompilerValues } from '../src'
+import { ICUUtil } from '../src'
 
 type ExampleValues = {
   name: string,
@@ -10,30 +11,42 @@ type ExampleValues = {
 const examples: ExampleValues[] = [
   {
     name: 'Simple Replace',
-    values: {name: 'Alice'},
+    values: { name: 'Alice' },
     input: {
       type: 'Node',
       parts: [
-        {type: 'Text', value: 'Hello '},
-        {type: 'SimpleReplace', variableName: 'name'}
+        { type: 'Text', value:  'Hello ' },
+        { type: 'SimpleReplace', variableName: 'name' }
       ]
     },
     result: 'Hello Alice',
   },
   {
     name: 'Plural with number insertion',
-    values: {count: 1},
+    values: { count: 1 },
     input: {
       type: 'Node',
       parts: [
-        {type: 'Text', value: 'You have '},
+        { type: 'Text', value: 'You have ' },
         {
           type: 'OptionReplace',
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': {type: 'Text', value: '# apple'},
-            'other': {type: 'Text', value: '# apples'}
+            '=1': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' apple' }
+              ]
+            },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' apples' }
+              ]
+            }
           }
         }
       ]
@@ -42,7 +55,7 @@ const examples: ExampleValues[] = [
   },
   {
     name: 'Select with nested replacement',
-    values: {gender: 'female', name: 'Lee'},
+    values: { gender: 'female', name: 'Lee' },
     input: {
       type: 'OptionReplace',
       operatorName: 'select',
@@ -51,22 +64,22 @@ const examples: ExampleValues[] = [
         male: {
           type: 'Node',
           parts: [
-            {type: 'Text', value: 'Hello Mr. '},
-            {type: 'SimpleReplace', variableName: 'name'}
+            { type: 'Text', value: 'Hello Mr. ' },
+            { type: 'SimpleReplace', variableName: 'name' }
           ]
         },
         female: {
           type: 'Node',
           parts: [
-            {type: 'Text', value: 'Hello Ms. '},
-            {type: 'SimpleReplace', variableName: 'name'}
+            { type: 'Text', value: 'Hello Ms. ' },
+            { type: 'SimpleReplace', variableName: 'name' }
           ]
         },
         other: {
           type: 'Node',
           parts: [
-            {type: 'Text', value: 'Hello '},
-            {type: 'SimpleReplace', variableName: 'name'}
+            { type: 'Text', value: 'Hello ' },
+            { type: 'SimpleReplace', variableName: 'name' }
           ]
         }
       }
@@ -75,7 +88,7 @@ const examples: ExampleValues[] = [
   },
   {
     name: 'Plural and Select in succession',
-    values: {count: 0, gender: 'male'},
+    values: { count: 0, gender: 'male' },
     input: {
       type: 'Node',
       parts: [
@@ -84,19 +97,24 @@ const examples: ExampleValues[] = [
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=0': {type: 'Text', value: 'no items'},
-            '=1': {type: 'Text', value: 'one item'},
-            'other': {type: 'Text', value: '# items'}
+            '=0': { type: 'Text', value: 'no items' },
+            '=1': { type: 'Text', value: 'one item' },
+            'other': {
+              type: 'Node', parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' items' }
+              ]
+            }
           }
         },
-        {type: 'Text', value: ' and '},
+        { type: 'Text', value: ' and ' },
         {
           type: 'OptionReplace',
           operatorName: 'select',
           variableName: 'gender',
           options: {
-            male: {type: 'Text', value: 'sir'},
-            other: {type: 'Text', value: 'friend'}
+            male: { type: 'Text', value: 'sir' },
+            other: { type: 'Text', value: 'friend' }
           }
         }
       ]
@@ -105,7 +123,7 @@ const examples: ExampleValues[] = [
   },
   {
     name: 'Plural nested in Select',
-    values: {userType: 'member', count: 3},
+    values: { userType: 'member', count: 3 },
     input: {
       type: 'OptionReplace',
       operatorName: 'select',
@@ -116,8 +134,15 @@ const examples: ExampleValues[] = [
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': {type: 'Text', value: 'Admin, 1 message'},
-            'other': {type: 'Text', value: 'Admin, # messages'}
+            '=1': { type: 'Text', value: 'Admin, 1 message' },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'Text', value: 'Admin, ' },
+                { type: 'NumberField' },
+                { type: 'Text', value: ' messages' }
+              ]
+            }
           }
         },
         member: {
@@ -125,11 +150,18 @@ const examples: ExampleValues[] = [
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': {type: 'Text', value: 'Member, 1 message'},
-            'other': {type: 'Text', value: 'Member, # messages'}
+            '=1': { type: 'Text', value: 'Member, 1 message' },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'Text', value: 'Member, ' },
+                { type: 'NumberField' },
+                { type: 'Text', value: ' messages' }
+              ]
+            }
           }
         },
-        other: {type: 'Text', value: 'Guest'}
+        other: { type: 'Text', value: 'Guest' }
       }
     },
     result:
@@ -137,18 +169,30 @@ const examples: ExampleValues[] = [
   },
   {
     name: 'Replace, Escape and Plural',
-    values: {count: 2},
+    values: { count: 2 },
     input: {
       type: 'Node',
       parts: [
-        {type: 'Text', value: 'Today is {special} and you have '},
+        { type: 'Text', value: 'Today is {special} and you have ' },
         {
           type: 'OptionReplace',
           operatorName: 'plural',
           variableName: 'count',
           options: {
-            '=1': {type: 'Text', value: '# cat'},
-            'other': {type: 'Text', value: '# cats'}
+            '=1': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' cat' }
+              ]
+            },
+            'other': {
+              type: 'Node',
+              parts: [
+                { type: 'NumberField' },
+                { type: 'Text', value: ' cats' }
+              ]
+            }
           }
         }
       ]
@@ -158,10 +202,7 @@ const examples: ExampleValues[] = [
   {
     name: 'Escape sequence',
     values: {},
-    input: {
-      type: 'Text',
-      value: "''' {}",
-    },
+    input: { type: 'Text', value: "''' {}" },
     result: "''' {}",
   }
 ]
