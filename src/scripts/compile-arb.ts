@@ -6,47 +6,48 @@ import readline from 'readline'
 /* ------------------ types ------------------ */
 
 interface PlaceholderMeta {
-  type?: string
+  type?: string,
 }
 
 interface ARBPlaceholders {
-  [key: string]: PlaceholderMeta
+  [key: string]: PlaceholderMeta,
 }
 
 interface ARBMeta {
-  placeholders?: ARBPlaceholders
+  placeholders?: ARBPlaceholders,
 }
 
 interface ARBFile {
-  [key: string]: string | ARBMeta
+  [key: string]: string | ARBMeta,
 }
 
 interface FuncParam {
-  name: string
-  typing: string
+  name: string,
+  typing: string,
 }
 
 interface TextEntry {
-  type: 'text'
-  value: string
+  type: 'text',
+  value: string,
 }
 
 interface FuncEntry {
-  type: 'func'
-  params: FuncParam[]
-  value: string
+  type: 'func',
+  params: FuncParam[],
+  value: string,
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TranslationEntry = TextEntry | FuncEntry | Record<string, any>
 
 /* ------------------ CLI args ------------------ */
 function parseArgs() {
   const args = process.argv.slice(2)
   const result: {
-    input?: string
-    outputFile?: string
-    force: boolean
-    help: boolean
+    input?: string,
+    outputFile?: string,
+    force: boolean,
+    help: boolean,
   } = {
     force: false,
     help: false
@@ -124,8 +125,7 @@ function askQuestion(query: string): Promise<string> {
     rl.question(query, ans => {
       rl.close()
       resolve(ans)
-    })
-  )
+    }))
 }
 
 /* ------------------ I/O helpers ------------------ */
@@ -134,8 +134,7 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true })
 }
 
-function toSingleQuote(str: any): string {
-  if (typeof str !== 'string') return str
+function toSingleQuote(str: string): string {
   return `'${str.replace(/'/g, "\\'")}'`
 }
 
@@ -178,6 +177,7 @@ function readARBDir(
 
       const meta = content[`@${key}`] as ARBMeta | undefined
       const flatKey = prefix ? `${prefix}.${key}` : key
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const entryObj: any = {}
 
       if (meta?.placeholders) {
@@ -201,7 +201,7 @@ function readARBDir(
         entryObj.type = 'func'
         entryObj.params = params
         entryObj.value = `(values): string => ICUUtil.interpret(${toSingleQuote(
-          value
+          String(value)
         )}, values)`
       } else {
         // plain text
@@ -224,8 +224,7 @@ function generateCode(
 ): string {
   const indent = '  '.repeat(indentLevel)
   const entries = Object.entries(obj).sort((a, b) =>
-    a[0].localeCompare(b[0])
-  )
+    a[0].localeCompare(b[0]))
 
   let str = ''
 
@@ -243,6 +242,7 @@ function generateCode(
     } else {
       // nested object
       str += `${indent}${quotedKey}: {\n`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       str += generateCode(entry as any, indentLevel + 1)
       str += `${indent}}${comma}\n`
     }

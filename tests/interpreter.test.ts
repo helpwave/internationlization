@@ -1,4 +1,5 @@
-import {ICUCompilerValues, ICUUtil} from "../src";
+import type { ICUCompilerValues } from '../src'
+import { ICUUtil } from '../src'
 
 type TestValues = {
   name: string,

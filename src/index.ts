@@ -1,3 +1,3 @@
-export * from "./icu"
-export * from "./combineTranslation"
-export * from "./types"
+export * from './icu'
+export * from './combineTranslation'
+export * from './types'

@@ -1,4 +1,4 @@
-import {PartialTranslation, TranslationEntries} from "@/src/types";
+import type { PartialTranslation, TranslationEntries } from '@/src/types'
 
 type Exact<T, U extends T> = U;
 
