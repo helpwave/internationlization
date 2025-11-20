@@ -1,0 +1,53 @@
+{
+  "name": "@helpwave/internationalization",
+  "description": "helpwave's internationalization library",
+  "author": "helpwave <support@helpwave.de> (https://helpwave.de)",
+  "homepage": "https://helpwave.de",
+  "repository": {
+    "url": "git+https://github.com/helpwave/internationlization.git"
+  },
+  "license": "MPL-2.0",
+  "version": "0.1.0",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "build-intl": "./dist/scripts/compile-arb.js"
+  },
+  "exports": {
+    ".": {
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "build": "tsup",
+    "lint": "eslint .",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@helpwave/eslint-config": "0.0.7",
+    "@types/jest": "^30.0.0",
+    "eslint": "9.31.0",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "tsup": "8.5.0",
+    "typescript": "5.7.2",
+    "webpack": "5.97.1"
+  },
+  "keywords": [
+    "internationalization",
+    "compiler",
+    "typscript",
+    "typesafe",
+    "ARB"
+  ],
+  "bugs": {
+    "url": "https://github.com/helpwave/hightide/issues"
+  }
+}
