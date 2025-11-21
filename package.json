@@ -1,6 +1,9 @@
 {
   "name": "@helpwave/internationalization",
   "description": "helpwave's internationalization library",
+  "publishConfig": {
+    "access": "public"
+  },
   "author": "helpwave <support@helpwave.de> (https://helpwave.de)",
   "homepage": "https://helpwave.de",
   "repository": {
@@ -16,7 +19,7 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
-    "build-intl": "./dist/scripts/compile-arb.js"
+    "build-intl": "dist/scripts/compile-arb.js"
   },
   "exports": {
     ".": {
