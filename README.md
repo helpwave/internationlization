@@ -2,6 +2,31 @@
 helpwaves package for internationalization that creates localized and typesafe translation based on ARB files.
 
 ## Usage
+Create a `.arb` file with your translations:
+```json
+"priceInfo": "The price is {price} €{currency, select, usd{USD} eur{EUR} other{}}.",
+"@priceInfo": {
+  "placeholders": {
+    "price": {
+      "type": "number"
+    },
+    "currency": {}
+  }
+}
+```
+And get a translation:
+
+```typescript
+import {combineTranslation} from "./combineTranslation";
+
+translations["en-US"].priceInfo(price, currency)
+
+const t = combineTranslation([translation1, translation2], "en-US")
+// v still typesafe on both function parameters
+t("priceInfo", { price, currency })
+```
+
+## Getting Started
 #### Install the package
 ```
 npm install -D @helpwave/internationalization
@@ -36,4 +61,7 @@ Options:
 
 
 ## Tests
-The lexer, parser and compiler are all tested.
+The lexer, parser and compiler are all tested with jest, see [our tests](/tests)
+
+## Examples
+Example translation files and the resulting translation can be found in the [examples folder](/examples).

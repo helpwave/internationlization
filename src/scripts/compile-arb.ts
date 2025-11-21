@@ -2,6 +2,8 @@
 import fs from 'fs'
 import path from 'path'
 import readline from 'readline'
+import type { ICUASTNode } from '@/src'
+import { ICUUtil } from '@/src'
 
 /* ------------------ types ------------------ */
 
@@ -26,19 +28,10 @@ interface FuncParam {
   typing: string,
 }
 
-interface TextEntry {
-  type: 'text',
-  value: string,
-}
-
-interface FuncEntry {
-  type: 'func',
-  params: FuncParam[],
-  value: string,
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type TranslationEntry = TextEntry | FuncEntry | Record<string, any>
+type TranslationEntry =
+  { type: 'text', value: string }
+  | { type: 'func', params: FuncParam[], value: string }
+  | { type: 'nested', value: Record<string, TranslationEntry> }
 
 /* ------------------ CLI args ------------------ */
 function parseArgs() {
@@ -134,10 +127,6 @@ if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true })
 }
 
-function toSingleQuote(str: string): string {
-  return `'${str.replace(/'/g, "\\'")}'`
-}
-
 const locales = new Set<string>()
 
 /* ------------------ ARB reader ------------------ */
@@ -177,8 +166,8 @@ function readARBDir(
 
       const meta = content[`@${key}`] as ARBMeta | undefined
       const flatKey = prefix ? `${prefix}.${key}` : key
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const entryObj: any = {}
+
+      let entryObj: TranslationEntry
 
       if (meta?.placeholders) {
         // ICU function
@@ -198,15 +187,16 @@ function readARBDir(
           }
         )
 
-        entryObj.type = 'func'
-        entryObj.params = params
-        entryObj.value = `(values): string => ICUUtil.interpret(${toSingleQuote(
-          String(value)
-        )}, values)`
+        entryObj = {
+          type: 'func',
+          params,
+          value: value as string,
+        }
       } else {
-        // plain text
-        entryObj.type = 'text'
-        entryObj.value = value as string
+        entryObj = {
+          type: 'text',
+          value: value as string
+        }
       }
 
       result[locale][flatKey] = entryObj
@@ -217,6 +207,89 @@ function readARBDir(
 }
 
 /* ------------------ code generator: values ------------------ */
+
+function escapeForTemplateJS(s: string): string {
+    return s.replace(/`/g, '\\`')
+}
+
+function compile(
+  node: ICUASTNode,
+  context: { numberParam?: string, inNode: boolean, indentLevel: number } = { indentLevel: 0, inNode: false }
+): string[] {
+  const lines: string[] = []
+  let currentLine = ''
+  const isTopLevel = context.indentLevel === 0
+
+  function indent(level: number = context.indentLevel) {
+    return ' '.repeat(level * 2)
+  }
+
+  function flushCurrent() {
+    if(currentLine) {
+      if(context.inNode) {
+        lines.push(currentLine)
+      } else {
+        const prefix = !isTopLevel ? indent() : '_out += '
+        const nextLine = `${prefix}\`${escapeForTemplateJS(currentLine)}\``
+        lines.push(nextLine)
+      }
+    }
+    currentLine = ''
+  }
+
+  switch (node.type) {
+    case 'Text':
+      currentLine += node.value
+      break
+    case 'NumberField':
+      if (context.numberParam) {
+        currentLine += `$\{${context.numberParam}}`
+      } else {
+        currentLine += `{${context.numberParam}}`
+      }
+      break
+    case 'SimpleReplace':
+      currentLine += `$\{${node.variableName}}`
+      break
+    case 'Node': {
+      for (const partNode of node.parts) {
+        const compiled = compile(partNode, { ...context, inNode: true })
+        if (partNode.type === 'OptionReplace' || partNode.type === 'Node') {
+          flushCurrent()
+          lines.push(...compiled)
+        } else {
+          currentLine += compiled[0]
+        }
+      }
+      break
+    }
+    case 'OptionReplace': {
+      flushCurrent()
+      lines.push(`${isTopLevel ? '_out += ' : ''}TranslationGen.resolveSelect(${node.variableName}, {`)
+
+      const entries = Object.entries(node.options)
+
+      for (const [key, entryNode] of entries) {
+        const numberParamUpdate = node.operatorName === 'plural' ? key : undefined
+        const expr = compile(entryNode, {
+          ...context,
+          numberParam: numberParamUpdate ?? context.numberParam,
+          indentLevel: context.indentLevel + 1,
+          inNode: false,
+        })
+        if(expr.length === 0 ) continue
+        lines.push(indent(context.indentLevel + 1) + `'${key}': ${expr[0].trimStart()}`, ...expr.slice(1))
+        lines[lines.length - 1] += ','
+      }
+
+      lines.push(indent() + `})`)
+      return lines
+    }
+  }
+  flushCurrent()
+  return lines
+}
+
 
 function generateCode(
   obj: Record<string, TranslationEntry>,
@@ -233,17 +306,31 @@ function generateCode(
     const isLast = entries[entries.length - 1][0] === key
     const comma = isLast ? '' : ','
 
-    if ((entry as FuncEntry).type === 'func') {
-      str += `${indent}${quotedKey}: ${(entry as FuncEntry).value}${comma}\n`
-    } else if ((entry as TextEntry).type === 'text') {
-      str += `${indent}${quotedKey}: ${toSingleQuote(
-        (entry as TextEntry).value
-      )}${comma}\n`
+    if (entry.type === 'func') {
+      const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
+      let compiled = compile(ast)
+      if (compiled.filter(value => value.startsWith('_out +=')).length === 1) {
+        const first = compiled.findIndex(value => value.startsWith('_out +='))
+        compiled[first] = 'return ' + compiled[first].slice(8)
+      } else {
+        compiled = [
+          "let _out: string = ''",
+          ...compiled,
+          'return _out',
+        ]
+      }
+      const functionLines: string[] = [
+        `({ ${entry.params.map(value => value.name).join(', ')} }): string => {`,
+        ...compiled.map(value => `  ${value}`),
+        '}',
+      ]
+      str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
+    } else if (entry.type === 'text') {
+      str += `${indent}${quotedKey}: \`${escapeForTemplateJS(entry.value)}\`${comma}\n`
     } else {
       // nested object
       str += `${indent}${quotedKey}: {\n`
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      str += generateCode(entry as any, indentLevel + 1)
+      str += generateCode(entry.value, indentLevel + 1)
       str += `${indent}}${comma}\n`
     }
   }
@@ -281,12 +368,12 @@ function generateType(
   for (const [key, entry] of Object.entries(fullObject)) {
     const quotedKey = `'${key}'`
 
-    if ((entry as FuncEntry).type === 'func') {
-      const params = (entry as FuncEntry).params
+    if (entry.type === 'func') {
+      const params = entry.params
         .map(p => `${p.name}: ${p.typing}`)
         .join(', ')
       str += `${indent}${quotedKey}: (values: { ${params} }) => string,\n`
-    } else if ((entry as TextEntry).type === 'text') {
+    } else if (entry.type === 'text') {
       str += `${indent}${quotedKey}: string,\n`
     }
   }
@@ -299,8 +386,11 @@ function generateType(
 async function main(): Promise<void> {
   const translationData = readARBDir(inputDir)
 
-  let output = `// AUTO-GENERATED. DO NOT EDIT.\n\n`
-  output += `import { ICUUtil, Translation } from '@helpwave/internationalization'\n\n`
+  let output = `// AUTO-GENERATED. DO NOT EDIT.\n`
+  output += `import type { Translation } from '@helpwave/internationalization'\n`
+  output += `import { TranslationGen } from '@helpwave/internationalization'\n\n`
+
+  output += '/* eslint-disable @stylistic/quote-props */\n'
 
   output += `export const supportedLocales = [${[
     ...locales.values()
@@ -310,13 +400,17 @@ async function main(): Promise<void> {
 
   output += `export type SupportedLocale = typeof supportedLocales[number]\n\n`
 
-  output += `export type GeneratedTranslationEntries = {\n${generateType(
-    translationData
-  )}}\n\n`
+  const generatedTyping = generateType(translationData)
+  output += `export type GeneratedTranslationEntries = {\n${generatedTyping}}\n\n`
 
-  output += `export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {\n${generateCode(
-    translationData
-  )}}\n\n`
+  const value: Record<string, TranslationEntry> = {}
+  for (const locale of locales) {
+    value[locale] = { type: 'nested', value: translationData[locale] }
+  }
+
+
+  const generatedTranslation = generateCode(value)
+  output += `export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {\n${generatedTranslation}}\n\n`
 
   if (fs.existsSync(OUTPUT_FILE) && !force) {
     const answer = await askQuestion(

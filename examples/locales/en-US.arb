@@ -1,0 +1,76 @@
+{
+  "userGreeting": "{gender, select, male{Hello, {name}!} female{Hello, {name}!} other{Hello, person!}}",
+  "@userGreeting": {
+    "placeholders": {
+      "gender": {},
+      "name": {
+        "type": "string"
+      }
+    }
+  },
+  "itemCount": "{count, plural, =0{No items} =1{One item} other{{count} items}}",
+  "@itemCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "accountStatus": "{status, select, active{Active} inactive{Inactive} other{Unknown}}",
+  "@accountStatus": {
+    "placeholders": {
+      "status": {}
+    }
+  },
+  "ageCategory": "{ageGroup, select, child{Child} adult{Adult} senior{Senior} other{Person}}",
+  "@ageCategory": {
+    "placeholders": {
+      "ageGroup": {}
+    }
+  },
+  "passwordStrength": "{strength, select, weak{Weak} medium{Medium} strong{Strong} other{Unknown}}",
+  "@passwordStrength": {
+    "placeholders": {
+      "strength": {}
+    }
+  },
+  "welcomeMessage": "{gender, select, male{Welcome, {name}!} female{Welcome, {name}!} other{Welcome, person!}} You have {count, plural, =0{no new messages} =1{one new message} other{{count} new messages}}.",
+  "@welcomeMessage": {
+    "placeholders": {
+      "gender": {},
+      "name": {
+        "type": "string"
+      },
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "priceInfo": "The price is {price} €{currency, select, usd{USD} eur{EUR} other{}}.",
+  "@priceInfo": {
+    "placeholders": {
+      "price": {
+        "type": "number"
+      },
+      "currency": {}
+    }
+  },
+  "taskDeadline": "The task must be completed by {deadline}.",
+  "@taskDeadline": {
+    "placeholders": {
+      "deadline": {
+        "type": "string"
+      }
+    }
+  },
+  "escapedExample": "The following characters must be escaped: '{' '}' ''",
+  "nestedSelectPlural": "{gender, select, male{{count, plural, =0{No messages} =1{One message} other{{count} messages}}} female{{count, plural, =0{No messages} =1{One message} other{{count} messages}}} other{{count, plural, =0{No messages} =1{One message} other{{count} messages}}}}",
+  "@nestedSelectPlural": {
+    "placeholders": {
+      "gender": {},
+      "count": {
+        "type": "number"
+      }
+    }
+  }
+}
