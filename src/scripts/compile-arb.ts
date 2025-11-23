@@ -119,10 +119,10 @@ const name = parsed.name
   .replace(/[^a-zA-Z0-9]/g, '_')
   .replace(/^[0-9]/, '')
 
-if(name.length < 1 || name[0].toUpperCase() === name[0]) {
+if (name.length < 1 || name[0].toUpperCase() === name[0]) {
   console.error(`The name ${parsed.name} is invalid. Use [a-z][a-zA-Z0-9_]+`)
   process.exit(0)
-} else if(name.length !== parsed.name.length) {
+} else if (name.length !== parsed.name.length) {
   console.warn(`The name ${parsed.name} cannot start with a number.`)
 }
 
@@ -149,7 +149,7 @@ if (!fs.existsSync(outputDir)) {
 }
 
 const capitalize = (s: string): string => {
-  if(s.length > 0) {
+  if (s.length > 0) {
     return s.charAt(0).toUpperCase() + s.slice(1)
   }
   return s
@@ -175,7 +175,10 @@ function readARBDir(
       const newPrefix = prefix ? `${prefix}.${entry.name}` : entry.name
       const values = readARBDir(fullPath, newPrefix)
       for (const locale of locales) {
-        Object.assign(result[locale], values[locale])
+        if (values[locale]) {
+          if (!result[locale]) result[locale] = {}
+          Object.assign(result[locale], values[locale])
+        }
       }
       continue
     }
@@ -198,37 +201,41 @@ function readARBDir(
 
       let entryObj: TranslationEntry
 
-      if (meta?.placeholders) {
-        // ICU function
-        const params: FuncParam[] = Object.entries(meta.placeholders).map(
-          ([name, def]) => {
-            let typing = def.type
-            if (!typing) {
-              if (['count', 'amount', 'length', 'number'].includes(name)) {
-                typing = 'number'
-              } else if (['date', 'dateTime'].includes(name)) {
-                typing = 'Date'
-              } else {
-                typing = 'string'
+      try {
+        if (meta?.placeholders) {
+          // ICU function
+          const params: FuncParam[] = Object.entries(meta.placeholders).map(
+            ([name, def]) => {
+              let typing = def.type
+              if (!typing) {
+                if (['count', 'amount', 'length', 'number'].includes(name)) {
+                  typing = 'number'
+                } else if (['date', 'dateTime'].includes(name)) {
+                  typing = 'Date'
+                } else {
+                  typing = 'string'
+                }
               }
+              return { name, typing }
             }
-            return { name, typing }
+          )
+
+          entryObj = {
+            type: 'func',
+            params,
+            value: value as string,
           }
-        )
+        } else {
+          entryObj = {
+            type: 'text',
+            value: value as string
+          }
+        }
 
-        entryObj = {
-          type: 'func',
-          params,
-          value: value as string,
-        }
-      } else {
-        entryObj = {
-          type: 'text',
-          value: value as string
-        }
+        result[locale][flatKey] = entryObj
+      }catch (e) {
+        console.error(`Failed to load [${key}] in file ${fullPath}`, e)
       }
-
-      result[locale][flatKey] = entryObj
     }
   }
 
@@ -358,35 +365,39 @@ function generateCode(
     const isLast = entries[entries.length - 1][0] === key
     const comma = isLast ? '' : ','
 
-    if (entry.type === 'func') {
-      const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
-      let compiled = compile(ast)
-      if (compiled.filter(value => value.startsWith('_out +=')).length === 1) {
-        const first = compiled.findIndex(value => value.startsWith('_out +='))
-        compiled[first] = 'return ' + compiled[first].slice(8)
-      } else {
-        compiled = [
-          "let _out: string = ''",
-          ...compiled,
-          'return _out',
+    try {
+      if (entry.type === 'func') {
+        const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
+        let compiled = compile(ast)
+        if (compiled.filter(value => value.startsWith('_out +=')).length === 1) {
+          const first = compiled.findIndex(value => value.startsWith('_out +='))
+          compiled[first] = 'return ' + compiled[first].slice(8)
+        } else {
+          compiled = [
+            "let _out: string = ''",
+            ...compiled,
+            'return _out',
+          ]
+        }
+        const functionLines: string[] = [
+          `({ ${entry.params.map(value => value.name).join(', ')} }): string => {`,
+          ...compiled.map(value => `  ${value}`),
+          '}',
         ]
+        str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
+      } else if (entry.type === 'text') {
+        const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
+        const compiled = compile(ast, { ...defaultCompileContext, isOnlyText: true })
+        const text = compiled.length === 1 ? compiled[0] : `\`${escapeForTemplateJS(entry.value)}\``
+        str += `${indent}${quotedKey}: ${text}${comma}\n`
+      } else {
+        // nested object
+        str += `${indent}${quotedKey}: {\n`
+        str += generateCode(entry.value, indentLevel + 1)
+        str += `${indent}}${comma}\n`
       }
-      const functionLines: string[] = [
-        `({ ${entry.params.map(value => value.name).join(', ')} }): string => {`,
-        ...compiled.map(value => `  ${value}`),
-        '}',
-      ]
-      str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
-    } else if (entry.type === 'text') {
-      const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
-      const compiled = compile(ast, { ...defaultCompileContext, isOnlyText: true })
-      const text = compiled.length === 1 ? compiled[0] : `\`${escapeForTemplateJS(entry.value)}\``
-      str += `${indent}${quotedKey}: ${text}${comma}\n`
-    } else {
-      // nested object
-      str += `${indent}${quotedKey}: {\n`
-      str += generateCode(entry.value, indentLevel + 1)
-      str += `${indent}}${comma}\n`
+    } catch (e) {
+      console.error(`Failed to compile key [${key}] with value "${entry.value}"`, e)
     }
   }
 
