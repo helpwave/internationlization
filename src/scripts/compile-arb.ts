@@ -41,9 +41,11 @@ function parseArgs() {
     outputFile?: string,
     force: boolean,
     help: boolean,
+    name: string,
   } = {
     force: false,
-    help: false
+    help: false,
+    name: 'generatedTranslation'
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -58,6 +60,11 @@ function parseArgs() {
       case '--out':
       case '-o':
         result.outputFile = args[++i]
+        break
+
+      case '--name':
+      case '-n':
+        result.name = args[++i]
         break
 
       case '--force':
@@ -84,6 +91,7 @@ Options:
   -i, --in <dir>        Input directory containing .arb files
   -o, --out <file>      Output file (e.g. ./i18n/translations.ts)
   -f, --force           Overwrite output without prompt
+  -n, --name <name>     The name for exported translation within the code
   -h, --help            Show this help message
 `)
 }
@@ -107,6 +115,19 @@ const force = parsed.force
 
 const outputDir = path.dirname(OUTPUT_FILE)
 
+const name = parsed.name
+  .replace(/[^a-zA-Z0-9]/g, '_')
+  .replace(/^[0-9]/, '')
+
+if(name.length < 1 || name[0].toUpperCase() === name[0]) {
+  console.error(`The name ${parsed.name} is invalid. Use [a-z][a-zA-Z0-9_]+`)
+  process.exit(0)
+} else if(name.length !== parsed.name.length) {
+  console.warn(`The name ${parsed.name} cannot start with a number.`)
+}
+
+console.log(name)
+
 /* ------------------ prompts ------------------ */
 
 function askQuestion(query: string): Promise<string> {
@@ -126,6 +147,14 @@ function askQuestion(query: string): Promise<string> {
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true })
 }
+
+const capitalize = (s: string): string => {
+  if(s.length > 0) {
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+  return s
+}
+
 
 const locales = new Set<string>()
 
@@ -420,16 +449,19 @@ async function main(): Promise<void> {
   output += `import type { Translation } from '@helpwave/internationalization'\n`
   output += `import { TranslationGen } from '@helpwave/internationalization'\n\n`
 
-  output += `export const supportedLocales = [${[
+  const localesVarName = `${name}Locales`
+  const localesTypeName = `${capitalize(name)}Locales`
+  output += `export const ${localesVarName} = [${[
     ...locales.values()
   ]
     .map(v => `'${v}'`)
     .join(', ')}] as const\n\n`
 
-  output += `export type SupportedLocale = typeof supportedLocales[number]\n\n`
+  output += `export type ${localesTypeName} = typeof ${localesVarName}[number]\n\n`
 
+  const typeName = `${capitalize(name)}Entries`
   const generatedTyping = generateType(translationData)
-  output += `export type GeneratedTranslationEntries = {\n${generatedTyping}}\n\n`
+  output += `export type ${typeName} = {\n${generatedTyping}}\n\n`
 
   const value: Record<string, TranslationEntry> = {}
   for (const locale of locales) {
@@ -437,7 +469,7 @@ async function main(): Promise<void> {
   }
 
   const generatedTranslation = generateCode(value)
-  output += `export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {\n${generatedTranslation}}\n\n`
+  output += `export const ${name}: Translation<${localesTypeName}, Partial<${typeName}>> = {\n${generatedTranslation}}\n\n`
 
   if (fs.existsSync(OUTPUT_FILE) && !force) {
     const answer = await askQuestion(

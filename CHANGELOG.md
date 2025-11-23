@@ -7,6 +7,10 @@ and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.2.0] - 2025-11-23
 
+### Added 
+- Add argument to change the generated translation name `-n | --name`
+- Add types `TranslationExtension` and `PartialTranslationExtension` to simplify extending translations
+
 ### Changed
 - Updated README.md example
 

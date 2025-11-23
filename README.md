@@ -71,5 +71,5 @@ Example translation files and the resulting translation can be found in the [exa
 Rebuild the examples:
 ```bash
 npm run build
-node dist/scripts/compile-arb.js --force -i ./examples/locales -o ./examples/translations/translations.ts
+node dist/scripts/compile-arb.js --force -i ./examples/locales -o ./examples/translations/translations.ts -n "exampleTranslation"
 ```

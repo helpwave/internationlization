@@ -5,11 +5,11 @@
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
-export const supportedLocales = ['de-DE', 'en-US', 'fr-FR'] as const
+export const exampleTranslationLocales = ['de-DE', 'en-US', 'fr-FR'] as const
 
-export type SupportedLocale = typeof supportedLocales[number]
+export type ExampleTranslationLocales = typeof exampleTranslationLocales[number]
 
-export type GeneratedTranslationEntries = {
+export type ExampleTranslationEntries = {
   'accountStatus': (values: { status: string }) => string,
   'ageCategory': (values: { ageGroup: string }) => string,
   'escapeCharacters': string,
@@ -28,7 +28,7 @@ export type GeneratedTranslationEntries = {
   'yes': string,
 }
 
-export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {
+export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<ExampleTranslationEntries>> = {
   'de-DE': {
     'accountStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
