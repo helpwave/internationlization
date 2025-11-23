@@ -1,15 +1,18 @@
 // AUTO-GENERATED. DO NOT EDIT.
+/* eslint-disable @stylistic/quote-props */
+/* eslint-disable no-useless-escape */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { Translation } from '@helpwave/internationalization'
 import { TranslationGen } from '@helpwave/internationalization'
 
-/* eslint-disable @stylistic/quote-props */
-export const supportedLocales = ['de-DE', 'en-US', 'fr-FR'] as const
+export const exampleTranslationLocales = ['de-DE', 'en-US', 'fr-FR'] as const
 
-export type SupportedLocale = typeof supportedLocales[number]
+export type ExampleTranslationLocales = typeof exampleTranslationLocales[number]
 
-export type GeneratedTranslationEntries = {
+export type ExampleTranslationEntries = {
   'accountStatus': (values: { status: string }) => string,
   'ageCategory': (values: { ageGroup: string }) => string,
+  'escapeCharacters': string,
   'escapedExample': string,
   'itemCount': (values: { count: number }) => string,
   'nestedSelectPlural': (values: { gender: string, count: number }) => string,
@@ -25,7 +28,7 @@ export type GeneratedTranslationEntries = {
   'yes': string,
 }
 
-export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {
+export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<ExampleTranslationEntries>> = {
   'de-DE': {
     'accountStatus': ({ status }): string => {
       return TranslationGen.resolveSelect(status, {
@@ -42,7 +45,8 @@ export const generatedTranslations: Translation<SupportedLocale, Partial<Generat
         'other': `Person`,
       })
     },
-    'escapedExample': `Folgende Zeichen müssen escaped werden: '{' '}' ''`,
+    'escapeCharacters': `Folgende Zeichen werden mit \\ im resultiernden string ergänzt \`, \\ und \$ \${`,
+    'escapedExample': `Folgende Zeichen müssen escaped werden: {, }, '`,
     'itemCount': ({ count }): string => {
       return TranslationGen.resolveSelect(count, {
         '=0': `Keine Elemente`,
@@ -79,10 +83,10 @@ export const generatedTranslations: Translation<SupportedLocale, Partial<Generat
     },
     'priceInfo': ({ price, currency }): string => {
       let _out: string = ''
-      _out += `Der Preis beträgt ${price} €`
+      _out += `Der Preis beträgt ${price}`
       _out += TranslationGen.resolveSelect(currency, {
-        'usd': `USD`,
-        'eur': `EUR`,
+        'usd': `\$USD`,
+        'eur': `€`,
       })
       _out += `.`
       return _out
@@ -130,7 +134,7 @@ export const generatedTranslations: Translation<SupportedLocale, Partial<Generat
         'other': `Person`,
       })
     },
-    'escapedExample': `The following characters must be escaped: '{' '}' ''`,
+    'escapedExample': `The following characters must be escaped: { } '`,
     'itemCount': ({ count }): string => {
       return TranslationGen.resolveSelect(count, {
         '=0': `No items`,
@@ -167,10 +171,10 @@ export const generatedTranslations: Translation<SupportedLocale, Partial<Generat
     },
     'priceInfo': ({ price, currency }): string => {
       let _out: string = ''
-      _out += `The price is ${price} €`
+      _out += `The price is ${price}`
       _out += TranslationGen.resolveSelect(currency, {
-        'usd': `USD`,
-        'eur': `EUR`,
+        'usd': `\$USD`,
+        'eur': `€`,
       })
       _out += `.`
       return _out

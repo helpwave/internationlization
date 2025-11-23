@@ -41,9 +41,11 @@ function parseArgs() {
     outputFile?: string,
     force: boolean,
     help: boolean,
+    name: string,
   } = {
     force: false,
-    help: false
+    help: false,
+    name: 'generatedTranslation'
   }
 
   for (let i = 0; i < args.length; i++) {
@@ -58,6 +60,11 @@ function parseArgs() {
       case '--out':
       case '-o':
         result.outputFile = args[++i]
+        break
+
+      case '--name':
+      case '-n':
+        result.name = args[++i]
         break
 
       case '--force':
@@ -84,6 +91,7 @@ Options:
   -i, --in <dir>        Input directory containing .arb files
   -o, --out <file>      Output file (e.g. ./i18n/translations.ts)
   -f, --force           Overwrite output without prompt
+  -n, --name <name>     The name for exported translation within the code
   -h, --help            Show this help message
 `)
 }
@@ -107,6 +115,19 @@ const force = parsed.force
 
 const outputDir = path.dirname(OUTPUT_FILE)
 
+const name = parsed.name
+  .replace(/[^a-zA-Z0-9]/g, '_')
+  .replace(/^[0-9]/, '')
+
+if(name.length < 1 || name[0].toUpperCase() === name[0]) {
+  console.error(`The name ${parsed.name} is invalid. Use [a-z][a-zA-Z0-9_]+`)
+  process.exit(0)
+} else if(name.length !== parsed.name.length) {
+  console.warn(`The name ${parsed.name} cannot start with a number.`)
+}
+
+console.log(name)
+
 /* ------------------ prompts ------------------ */
 
 function askQuestion(query: string): Promise<string> {
@@ -126,6 +147,14 @@ function askQuestion(query: string): Promise<string> {
 if (!fs.existsSync(outputDir)) {
   fs.mkdirSync(outputDir, { recursive: true })
 }
+
+const capitalize = (s: string): string => {
+  if(s.length > 0) {
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+  return s
+}
+
 
 const locales = new Set<string>()
 
@@ -209,12 +238,28 @@ function readARBDir(
 /* ------------------ code generator: values ------------------ */
 
 function escapeForTemplateJS(s: string): string {
-    return s.replace(/`/g, '\\`')
+  return s
+    .replace(/\\/g, `\\\\`)
+    .replace(/`/g, `\\\``)
+    .replace(/\$/g, `\\$`)
+}
+
+type CompileContext = {
+  numberParam?: string,
+  inNode: boolean,
+  indentLevel: number,
+  isOnlyText: boolean,
+}
+
+const defaultCompileContext: CompileContext = {
+  indentLevel: 0,
+  inNode: false,
+  isOnlyText: false,
 }
 
 function compile(
   node: ICUASTNode,
-  context: { numberParam?: string, inNode: boolean, indentLevel: number } = { indentLevel: 0, inNode: false }
+  context: CompileContext = defaultCompileContext
 ): string[] {
   const lines: string[] = []
   let currentLine = ''
@@ -225,12 +270,15 @@ function compile(
   }
 
   function flushCurrent() {
-    if(currentLine) {
-      if(context.inNode) {
+    if (currentLine) {
+      if (context.inNode) {
         lines.push(currentLine)
       } else {
-        const prefix = !isTopLevel ? indent() : '_out += '
-        const nextLine = `${prefix}\`${escapeForTemplateJS(currentLine)}\``
+        const prefix =
+          context.isOnlyText ? '' :
+            !isTopLevel ? indent()
+              : '_out += '
+        const nextLine = `${prefix}\`${currentLine}\``
         lines.push(nextLine)
       }
     }
@@ -239,7 +287,7 @@ function compile(
 
   switch (node.type) {
     case 'Text':
-      currentLine += node.value
+      currentLine += escapeForTemplateJS(node.value)
       break
     case 'NumberField':
       if (context.numberParam) {
@@ -264,6 +312,10 @@ function compile(
       break
     }
     case 'OptionReplace': {
+      if (context.isOnlyText) {
+        currentLine += `{${node.variableName}, ${node.operatorName}, {options}}`
+        break
+      }
       flushCurrent()
       lines.push(`${isTopLevel ? '_out += ' : ''}TranslationGen.resolveSelect(${node.variableName}, {`)
 
@@ -277,7 +329,7 @@ function compile(
           indentLevel: context.indentLevel + 1,
           inNode: false,
         })
-        if(expr.length === 0 ) continue
+        if (expr.length === 0) continue
         lines.push(indent(context.indentLevel + 1) + `'${key}': ${expr[0].trimStart()}`, ...expr.slice(1))
         lines[lines.length - 1] += ','
       }
@@ -326,7 +378,10 @@ function generateCode(
       ]
       str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
     } else if (entry.type === 'text') {
-      str += `${indent}${quotedKey}: \`${escapeForTemplateJS(entry.value)}\`${comma}\n`
+      const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
+      const compiled = compile(ast, { ...defaultCompileContext, isOnlyText: true })
+      const text = compiled.length === 1 ? compiled[0] : `\`${escapeForTemplateJS(entry.value)}\``
+      str += `${indent}${quotedKey}: ${text}${comma}\n`
     } else {
       // nested object
       str += `${indent}${quotedKey}: {\n`
@@ -387,30 +442,34 @@ async function main(): Promise<void> {
   const translationData = readARBDir(inputDir)
 
   let output = `// AUTO-GENERATED. DO NOT EDIT.\n`
+  output += '/* eslint-disable @stylistic/quote-props */\n'
+  output += '/* eslint-disable no-useless-escape */\n'
+  output += '/* eslint-disable @typescript-eslint/no-unused-vars */\n'
+
   output += `import type { Translation } from '@helpwave/internationalization'\n`
   output += `import { TranslationGen } from '@helpwave/internationalization'\n\n`
 
-  output += '/* eslint-disable @stylistic/quote-props */\n'
-
-  output += `export const supportedLocales = [${[
+  const localesVarName = `${name}Locales`
+  const localesTypeName = `${capitalize(name)}Locales`
+  output += `export const ${localesVarName} = [${[
     ...locales.values()
   ]
     .map(v => `'${v}'`)
     .join(', ')}] as const\n\n`
 
-  output += `export type SupportedLocale = typeof supportedLocales[number]\n\n`
+  output += `export type ${localesTypeName} = typeof ${localesVarName}[number]\n\n`
 
+  const typeName = `${capitalize(name)}Entries`
   const generatedTyping = generateType(translationData)
-  output += `export type GeneratedTranslationEntries = {\n${generatedTyping}}\n\n`
+  output += `export type ${typeName} = {\n${generatedTyping}}\n\n`
 
   const value: Record<string, TranslationEntry> = {}
   for (const locale of locales) {
     value[locale] = { type: 'nested', value: translationData[locale] }
   }
 
-
   const generatedTranslation = generateCode(value)
-  output += `export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {\n${generatedTranslation}}\n\n`
+  output += `export const ${name}: Translation<${localesTypeName}, Partial<${typeName}>> = {\n${generatedTranslation}}\n\n`
 
   if (fs.existsSync(OUTPUT_FILE) && !force) {
     const answer = await askQuestion(

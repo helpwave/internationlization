@@ -4,13 +4,15 @@ helpwaves package for internationalization that creates localized and typesafe t
 ## Usage
 Create a `.arb` file with your translations:
 ```json
-"priceInfo": "The price is {price} €{currency, select, usd{USD} eur{EUR} other{}}.",
-"@priceInfo": {
-  "placeholders": {
-    "price": {
-      "type": "number"
-    },
-    "currency": {}
+{
+  "priceInfo": "The price is {price}{currency, select, usd{$USD} eur{€} other{}}.",
+  "@priceInfo": {
+    "placeholders": {
+      "price": {
+        "type": "number"
+      },
+      "currency": {}
+    }
   }
 }
 ```
@@ -65,3 +67,9 @@ The lexer, parser and compiler are all tested with jest, see [our tests](/tests)
 
 ## Examples
 Example translation files and the resulting translation can be found in the [examples folder](/examples).
+
+Rebuild the examples:
+```bash
+npm run build
+node dist/scripts/compile-arb.js --force -i ./examples/locales -o ./examples/translations/translations.ts -n "exampleTranslation"
+```

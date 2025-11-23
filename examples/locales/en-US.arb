@@ -46,7 +46,7 @@
       }
     }
   },
-  "priceInfo": "The price is {price} €{currency, select, usd{USD} eur{EUR} other{}}.",
+  "priceInfo": "The price is {price}{currency, select, usd{$USD} eur{€} other{}}.",
   "@priceInfo": {
     "placeholders": {
       "price": {
