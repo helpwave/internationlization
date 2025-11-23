@@ -209,12 +209,28 @@ function readARBDir(
 /* ------------------ code generator: values ------------------ */
 
 function escapeForTemplateJS(s: string): string {
-    return s.replace(/`/g, '\\`')
+  return s
+    .replace(/\\/g, `\\\\`)
+    .replace(/`/g, `\\\``)
+    .replace(/\$/g, `\\$`)
+}
+
+type CompileContext = {
+  numberParam?: string,
+  inNode: boolean,
+  indentLevel: number,
+  isOnlyText: boolean,
+}
+
+const defaultCompileContext: CompileContext = {
+  indentLevel: 0,
+  inNode: false,
+  isOnlyText: false,
 }
 
 function compile(
   node: ICUASTNode,
-  context: { numberParam?: string, inNode: boolean, indentLevel: number } = { indentLevel: 0, inNode: false }
+  context: CompileContext = defaultCompileContext
 ): string[] {
   const lines: string[] = []
   let currentLine = ''
@@ -225,12 +241,15 @@ function compile(
   }
 
   function flushCurrent() {
-    if(currentLine) {
-      if(context.inNode) {
+    if (currentLine) {
+      if (context.inNode) {
         lines.push(currentLine)
       } else {
-        const prefix = !isTopLevel ? indent() : '_out += '
-        const nextLine = `${prefix}\`${escapeForTemplateJS(currentLine)}\``
+        const prefix =
+          context.isOnlyText ? '' :
+            !isTopLevel ? indent()
+              : '_out += '
+        const nextLine = `${prefix}\`${currentLine}\``
         lines.push(nextLine)
       }
     }
@@ -239,7 +258,7 @@ function compile(
 
   switch (node.type) {
     case 'Text':
-      currentLine += node.value
+      currentLine += escapeForTemplateJS(node.value)
       break
     case 'NumberField':
       if (context.numberParam) {
@@ -264,6 +283,10 @@ function compile(
       break
     }
     case 'OptionReplace': {
+      if (context.isOnlyText) {
+        currentLine += `{${node.variableName}, ${node.operatorName}, {options}}`
+        break
+      }
       flushCurrent()
       lines.push(`${isTopLevel ? '_out += ' : ''}TranslationGen.resolveSelect(${node.variableName}, {`)
 
@@ -277,7 +300,7 @@ function compile(
           indentLevel: context.indentLevel + 1,
           inNode: false,
         })
-        if(expr.length === 0 ) continue
+        if (expr.length === 0) continue
         lines.push(indent(context.indentLevel + 1) + `'${key}': ${expr[0].trimStart()}`, ...expr.slice(1))
         lines[lines.length - 1] += ','
       }
@@ -326,7 +349,10 @@ function generateCode(
       ]
       str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
     } else if (entry.type === 'text') {
-      str += `${indent}${quotedKey}: \`${escapeForTemplateJS(entry.value)}\`${comma}\n`
+      const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
+      const compiled = compile(ast, { ...defaultCompileContext, isOnlyText: true })
+      const text = compiled.length === 1 ? compiled[0] : `\`${escapeForTemplateJS(entry.value)}\``
+      str += `${indent}${quotedKey}: ${text}${comma}\n`
     } else {
       // nested object
       str += `${indent}${quotedKey}: {\n`
@@ -387,10 +413,12 @@ async function main(): Promise<void> {
   const translationData = readARBDir(inputDir)
 
   let output = `// AUTO-GENERATED. DO NOT EDIT.\n`
+  output += '/* eslint-disable @stylistic/quote-props */\n'
+  output += '/* eslint-disable no-useless-escape */\n'
+  output += '/* eslint-disable @typescript-eslint/no-unused-vars */\n'
+
   output += `import type { Translation } from '@helpwave/internationalization'\n`
   output += `import { TranslationGen } from '@helpwave/internationalization'\n\n`
-
-  output += '/* eslint-disable @stylistic/quote-props */\n'
 
   output += `export const supportedLocales = [${[
     ...locales.values()
@@ -407,7 +435,6 @@ async function main(): Promise<void> {
   for (const locale of locales) {
     value[locale] = { type: 'nested', value: translationData[locale] }
   }
-
 
   const generatedTranslation = generateCode(value)
   output += `export const generatedTranslations: Translation<SupportedLocale, Partial<GeneratedTranslationEntries>> = {\n${generatedTranslation}}\n\n`
