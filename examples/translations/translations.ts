@@ -1,9 +1,9 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
 /* eslint-disable no-useless-escape */
-
-import type { Translation } from 'src/index'
-import { TranslationGen } from 'src/index'
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import type { Translation } from '@helpwave/internationalization'
+import { TranslationGen } from '@helpwave/internationalization'
 
 export const exampleTranslationLocales = ['de-DE', 'en-US', 'fr-FR'] as const
 
@@ -14,7 +14,8 @@ export type ExampleTranslationEntries = {
   'ageCategory': (values: { ageGroup: string }) => string,
   'escapeCharacters': string,
   'escapedExample': string,
-  'itemCount': (values: { count: number }) => string,
+  'nested.itemCount': (values: { count: number }) => string,
+  'nested.nested': string,
   'nestedSelectPlural': (values: { gender: string, count: number }) => string,
   'passwordStrength': (values: { strength: string }) => string,
   'priceInfo': (values: { price: number, currency: string }) => string,
@@ -47,13 +48,14 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     },
     'escapeCharacters': `Folgende Zeichen werden mit \\ im resultiernden string ergänzt \`, \\ und \$ \${`,
     'escapedExample': `Folgende Zeichen müssen escaped werden: {, }, '`,
-    'itemCount': ({ count }): string => {
+    'nested.itemCount': ({ count }): string => {
       return TranslationGen.resolveSelect(count, {
         '=0': `Keine Elemente`,
         '=1': `Ein Element`,
         'other': `${count} Elemente`,
       })
     },
+    'nested.nested': `Geschachtelt`,
     'nestedSelectPlural': ({ gender, count }): string => {
       return TranslationGen.resolveSelect(gender, {
         'male': TranslationGen.resolveSelect(count, {
@@ -135,13 +137,14 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
       })
     },
     'escapedExample': `The following characters must be escaped: { } '`,
-    'itemCount': ({ count }): string => {
+    'nested.itemCount': ({ count }): string => {
       return TranslationGen.resolveSelect(count, {
         '=0': `No items`,
         '=1': `One item`,
         'other': `${count} items`,
       })
     },
+    'nested.nested': `Nested`,
     'nestedSelectPlural': ({ gender, count }): string => {
       return TranslationGen.resolveSelect(gender, {
         'male': TranslationGen.resolveSelect(count, {
@@ -214,3 +217,4 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'yes': `Oui`
   }
 }
+
