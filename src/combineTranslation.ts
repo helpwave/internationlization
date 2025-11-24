@@ -15,12 +15,22 @@ export function combineTranslation<L extends string, T extends TranslationEntrie
     values?: T[K] extends (...args: infer P) => unknown ? Exact<P[0], P[0]> : never
   ): string {
     const usedTranslations = Array.isArray(translations) ? translations : [translations]
+    let foundLocale = false
+    let foundKey = false
     for (const translation of usedTranslations) {
       const localizedTranslation = translation[locale]
-      if (!localizedTranslation) continue
+      if (!localizedTranslation) {
+        continue
+      } else {
+        foundLocale = true
+      }
 
       const msg = localizedTranslation[key]
-      if (!msg) continue
+      if (!msg) {
+        continue
+      } else {
+        foundKey = true
+      }
 
       if (typeof msg === 'string') {
         return msg
@@ -28,7 +38,12 @@ export function combineTranslation<L extends string, T extends TranslationEntrie
         return msg(values as never)
       }
     }
-    console.warn(`Missing key or locale for locale "${locale}" and key "${String(key)}" in all translations`)
+    if(!foundLocale) {
+      console.warn(`Did not find locale "${locale}" in all translations`)
+    } else if(!foundKey) {
+      console.warn(`Did not find key [${String(key)}] for locale "${locale}" in all translations`)
+    }
+
     return `{{${locale}:${String(key)}}}`
   }
 

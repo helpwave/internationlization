@@ -452,7 +452,6 @@ describe('ICU Parser', () => {
   for (const example of examples) {
     test(`${example.name}:`, () => {
       const result = ICUUtil.parse(example.input)
-      console.log(result)
       expect(result).toEqual(example.result)
     })
   }

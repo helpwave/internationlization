@@ -1,4 +1,7 @@
-export type TranslationEntry = string | ((values: Record<string, unknown>) => string)
+// The 'any' is required as strict typescript otherwise complains about different function parameters in
+// the TranslationEntries object
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TranslationEntry<V extends object = any> = string | ((values: V) => string)
 
 export type TranslationEntries = Record<string, TranslationEntry>
 

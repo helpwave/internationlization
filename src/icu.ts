@@ -173,7 +173,7 @@ function parse(tokens: ICUToken[]): ICUASTNode {
 
     switch (token.type) {
       case 'ESCAPE':
-        if (context.last.type === 'ESCAPE') {
+        if (context.last?.type === 'ESCAPE') {
           pushFunction(escapeCharacter)
         }
         context.state.pop()
@@ -245,6 +245,9 @@ function parse(tokens: ICUToken[]): ICUASTNode {
         } else if (state.expect === 'optionNameOrReplaceClose') {
           context.state.pop()
           const prevState = getState()
+          if(!state.operatorName) {
+            throw Error(`ICU Parser: Internal Parser Error. Operator name undefined in state.`)
+          }
           const node: ICUASTNode = {
             type: 'OptionReplace',
             variableName: state.variableName,
@@ -280,7 +283,6 @@ function parse(tokens: ICUToken[]): ICUASTNode {
         } else if (state.expect === 'optionContentOrClose') {
           pushText(',', state.subtree)
         } else {
-          console.log(context.state[context.state.length - 1])
           throw Error(`ICU Parser: Invalid placement of "," in replacement function.`)
         }
         break

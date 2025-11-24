@@ -1,0 +1,11 @@
+{
+  "nested": "Geschachtelt",
+  "itemCount": "{count, plural, =0{Keine Elemente} =1{Ein Element} other{{count} Elemente}}",
+  "@itemCount": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  }
+}

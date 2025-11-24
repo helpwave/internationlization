@@ -8,14 +8,6 @@
       }
     }
   },
-  "itemCount": "{count, plural, =0{No items} =1{One item} other{{count} items}}",
-  "@itemCount": {
-    "placeholders": {
-      "count": {
-        "type": "number"
-      }
-    }
-  },
   "accountStatus": "{status, select, active{Active} inactive{Inactive} other{Unknown}}",
   "@accountStatus": {
     "placeholders": {

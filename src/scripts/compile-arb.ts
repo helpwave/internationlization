@@ -84,7 +84,7 @@ function parseArgs() {
 
 
 function printHelp() {
-  console.log(`
+  console.info(`
 Usage: i18n-compile [options]
 
 Options:
@@ -125,8 +125,6 @@ if (name.length < 1 || name[0].toUpperCase() === name[0]) {
 } else if (name.length !== parsed.name.length) {
   console.warn(`The name ${parsed.name} cannot start with a number.`)
 }
-
-console.log(name)
 
 /* ------------------ prompts ------------------ */
 
