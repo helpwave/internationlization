@@ -1,9 +1,9 @@
 // AUTO-GENERATED. DO NOT EDIT.
 /* eslint-disable @stylistic/quote-props */
 /* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import type { Translation } from '@helpwave/internationalization'
-import { TranslationGen } from '@helpwave/internationalization'
+
+import type { Translation } from 'src/index'
+import { TranslationGen } from 'src/index'
 
 export const exampleTranslationLocales = ['de-DE', 'en-US', 'fr-FR'] as const
 
@@ -214,4 +214,3 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'yes': `Oui`
   }
 }
-
