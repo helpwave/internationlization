@@ -1,4 +1,4 @@
-export type TranslationEntry = string | ((values: object) => string)
+export type TranslationEntry = string | ((values: Record<string, unknown>) => string)
 
 export type TranslationEntries = Record<string, TranslationEntry>
 
