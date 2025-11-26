@@ -44,4 +44,5 @@ const translationCandidate: T = {
 
 test('Typing and type shape', () => {
   expect(isValidTranslation(translationCandidate)).toBe(true)
+  expect(translationCandidate['en'].function1({ name: 'Dune', author: 'Frank Herbert' })).toBe('Dune by Frank Herbert')
 })

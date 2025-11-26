@@ -1,3 +1,5 @@
+import { getPluralKey } from './compile-to-string'
+
 function resolveSelect(
   value: string | number | undefined | null,
   options: Record<string, string | (() => string)>
@@ -13,8 +15,8 @@ function resolvePlural(
   value: number,
   options: Record<string, string | (() => string)>
 ): string {
-  const v = String(value)
-  const handler = options[v] ?? options['other']
+  const key = getPluralKey(value)
+  const handler = options[key] ?? options['other']
   if (handler == null) return ''
   return typeof handler === 'function' ? handler() : handler
 }

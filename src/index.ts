@@ -1,4 +1,7 @@
-export * from './icu'
+export { ICUUtil } from './icu'
+export { ICUToken } from './lex'
+export { ICUASTNode } from './parse'
+export { ICUCompilerValues } from './compile-to-string'
 export * from './combineTranslation'
 export * from './types'
 export * from './translationGeneration'

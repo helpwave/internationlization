@@ -208,7 +208,7 @@ const examples: ExampleValues[] = [
 ]
 
 
-describe('ICU Compiler', () => {
+describe('ICU String-Compiler', () => {
   for (const example of examples) {
     test(`${example.name}`, () => {
       const result = ICUUtil.compile(example.input, example.values)
