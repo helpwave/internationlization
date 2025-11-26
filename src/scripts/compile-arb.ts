@@ -2,8 +2,8 @@
 import fs from 'fs'
 import path from 'path'
 import readline from 'readline'
-import type { ICUASTNode } from '@/src'
-import { ICUUtil } from '@/src'
+import { ICUUtil } from '../'
+import { compileToCode } from '@/src/compile-to-code'
 
 /* ------------------ types ------------------ */
 
@@ -23,7 +23,7 @@ interface ARBFile {
   [key: string]: string | ARBMeta,
 }
 
-interface FuncParam {
+export interface FuncParam {
   name: string,
   typing: string,
 }
@@ -199,19 +199,49 @@ function readARBDir(
 
       let entryObj: TranslationEntry
 
+      const nameOverwrites: { type: string, names: string[] }[] = [
+        { type: 'number', names: ['count', 'amount', 'length', 'number'] },
+        { type: 'Date', names: ['date', 'dateTime'] },
+        { type: 'string', names: ['name'] },
+      ]
+      const typeOverwrites: { type: string, types: string[] }[] = [
+        { type: 'number', types: ['int', 'float', 'double', 'Int', 'Float', 'Double'] },
+        { type: 'Date', types: ['date', 'DateTime', 'dateTime'] },
+        { type: 'string', types: ['String'] },
+      ]
+
       try {
         if (meta?.placeholders) {
           // ICU function
           const params: FuncParam[] = Object.entries(meta.placeholders).map(
             ([name, def]) => {
               let typing = def.type
-              if (!typing) {
-                if (['count', 'amount', 'length', 'number'].includes(name)) {
-                  typing = 'number'
-                } else if (['date', 'dateTime'].includes(name)) {
-                  typing = 'Date'
-                } else {
+              if (typing) {
+                const legalCharacters = /^[a-zA-Z]+$/.test(typing)
+                if(!legalCharacters) {
                   typing = 'string'
+                  console.error(`Type "${typing}" contained illegal characters for variable [${name}] of [${key}] in file ${fullPath}`)
+                } else {
+                  // type matching for .arb of other programming languages
+                  for (const typeOverwrite of typeOverwrites) {
+                    if (typeOverwrite.types.includes(name)) {
+                      typing = typeOverwrite.type
+                      break
+                    }
+                  }
+                }
+              } else {
+                typing = 'string'
+                for (const nameOverwrite of nameOverwrites) {
+                  if (nameOverwrite.names.includes(name)) {
+                    console.warn([
+                      `Variable [${name}] of [${key}] in file ${fullPath}`,
+                      `Was considered a ${nameOverwrite.type} due to the name being in ${nameOverwrite.names}.`,
+                      `To prevent this warning set the type explicitly or consider renaming it`
+                    ].join('\n'))
+                    typing = nameOverwrite.type
+                    break
+                  }
                 }
               }
               return { name, typing }
@@ -231,7 +261,7 @@ function readARBDir(
         }
 
         result[locale][flatKey] = entryObj
-      }catch (e) {
+      } catch (e) {
         console.error(`Failed to load [${key}] in file ${fullPath}`, e)
       }
     }
@@ -242,113 +272,7 @@ function readARBDir(
 
 /* ------------------ code generator: values ------------------ */
 
-function escapeForTemplateJS(s: string): string {
-  return s
-    .replace(/\\/g, `\\\\`)
-    .replace(/`/g, `\\\``)
-    .replace(/\$/g, `\\$`)
-}
-
-type CompileContext = {
-  numberParam?: string,
-  inNode: boolean,
-  indentLevel: number,
-  isOnlyText: boolean,
-}
-
-const defaultCompileContext: CompileContext = {
-  indentLevel: 0,
-  inNode: false,
-  isOnlyText: false,
-}
-
-function compile(
-  node: ICUASTNode,
-  context: CompileContext = defaultCompileContext
-): string[] {
-  const lines: string[] = []
-  let currentLine = ''
-  const isTopLevel = context.indentLevel === 0
-
-  function indent(level: number = context.indentLevel) {
-    return ' '.repeat(level * 2)
-  }
-
-  function flushCurrent() {
-    if (currentLine) {
-      if (context.inNode) {
-        lines.push(currentLine)
-      } else {
-        const prefix =
-          context.isOnlyText ? '' :
-            !isTopLevel ? indent()
-              : '_out += '
-        const nextLine = `${prefix}\`${currentLine}\``
-        lines.push(nextLine)
-      }
-    }
-    currentLine = ''
-  }
-
-  switch (node.type) {
-    case 'Text':
-      currentLine += escapeForTemplateJS(node.value)
-      break
-    case 'NumberField':
-      if (context.numberParam) {
-        currentLine += `$\{${context.numberParam}}`
-      } else {
-        currentLine += `{${context.numberParam}}`
-      }
-      break
-    case 'SimpleReplace':
-      currentLine += `$\{${node.variableName}}`
-      break
-    case 'Node': {
-      for (const partNode of node.parts) {
-        const compiled = compile(partNode, { ...context, inNode: true })
-        if (partNode.type === 'OptionReplace' || partNode.type === 'Node') {
-          flushCurrent()
-          lines.push(...compiled)
-        } else {
-          currentLine += compiled[0]
-        }
-      }
-      break
-    }
-    case 'OptionReplace': {
-      if (context.isOnlyText) {
-        currentLine += `{${node.variableName}, ${node.operatorName}, {options}}`
-        break
-      }
-      flushCurrent()
-      lines.push(`${isTopLevel ? '_out += ' : ''}TranslationGen.resolveSelect(${node.variableName}, {`)
-
-      const entries = Object.entries(node.options)
-
-      for (const [key, entryNode] of entries) {
-        const numberParamUpdate = node.operatorName === 'plural' ? key : undefined
-        const expr = compile(entryNode, {
-          ...context,
-          numberParam: numberParamUpdate ?? context.numberParam,
-          indentLevel: context.indentLevel + 1,
-          inNode: false,
-        })
-        if (expr.length === 0) continue
-        lines.push(indent(context.indentLevel + 1) + `'${key}': ${expr[0].trimStart()}`, ...expr.slice(1))
-        lines[lines.length - 1] += ','
-      }
-
-      lines.push(indent() + `})`)
-      return lines
-    }
-  }
-  flushCurrent()
-  return lines
-}
-
-
-function generateCode(
+export function generateCode(
   obj: Record<string, TranslationEntry>,
   indentLevel = 1
 ): string {
@@ -366,7 +290,16 @@ function generateCode(
     try {
       if (entry.type === 'func') {
         const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
-        let compiled = compile(ast)
+        let compiled = compileToCode(ast).map((value, index, array) => {
+          if (value.startsWith(' ')) {
+            return value
+          } else {
+            if (index - 1 < 0 || !array[index - 1].startsWith(' ')) {
+              return `_out += ${value}`
+            }
+          }
+          return value
+        })
         if (compiled.filter(value => value.startsWith('_out +=')).length === 1) {
           const first = compiled.findIndex(value => value.startsWith('_out +='))
           compiled[first] = 'return ' + compiled[first].slice(8)
@@ -385,8 +318,8 @@ function generateCode(
         str += `${indent}${quotedKey}: ${functionLines.join(`\n${indent}`)}${comma}\n`
       } else if (entry.type === 'text') {
         const ast = ICUUtil.parse(ICUUtil.lex(entry.value))
-        const compiled = compile(ast, { ...defaultCompileContext, isOnlyText: true })
-        const text = compiled.length === 1 ? compiled[0] : `\`${escapeForTemplateJS(entry.value)}\``
+        const compiled = compileToCode(ast, { isOnlyText: true })
+        const text = compiled.length === 1 ? compiled[0] : `\`${(entry.value)}\``
         str += `${indent}${quotedKey}: ${text}${comma}\n`
       } else {
         // nested object

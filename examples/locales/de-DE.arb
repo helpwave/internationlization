@@ -65,5 +65,14 @@
       }
     }
   },
-  "escapeCharacters": "Folgende Zeichen werden mit '\\' im resultiernden string ergänzt '`', '\\' und '$' $'{'"
+  "escapeCharacters": "Folgende Zeichen werden mit '\\' im resultiernden string ergänzt '`', '\\' und '$' $'{'",
+  "nWard": "{count, plural, =1{# Station} other{# Stationen}}",
+  "@nWard": {
+    "placeholders": {
+      "count": {
+        "type": "number"
+      }
+    }
+  },
+  "templateJSEscape": "` '${}'"
 }

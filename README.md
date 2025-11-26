@@ -19,12 +19,21 @@ Create a `.arb` file with your translations:
 And get a translation:
 
 ```typescript
-import {combineTranslation} from "./combineTranslation";
+import {combineTranslation} from "@helpwave/internationalization";
+import {Translation} from "@helpwave/internationalization";
 
-translations["en-US"].priceInfo(price, currency)
+translations["en-US"].priceInfo?.({price, currency})
 
-const t = combineTranslation([translation1, translation2], "en-US")
-// v still typesafe on both function parameters
+type ExtensionType = { name: string } 
+const extension: Translation<"fr-FR", ExtensionType> = {
+  "fr-FR": {
+    name: "Charlemagne"
+  }
+}
+
+const t = combineTranslation([translations, extension], "en-US")
+// typesafe on both function parameters 
+// and handles errors automatically -> return = {{${locale}:${String(key)}}}
 t("priceInfo", { price, currency })
 ```
 
@@ -72,4 +81,28 @@ Rebuild the examples:
 ```bash
 npm run build
 node dist/scripts/compile-arb.js --force -i ./examples/locales -o ./examples/translations/translations.ts -n "exampleTranslation"
+```
+
+React hook example:
+```typescript
+type UseHidetideTranslationOverwrites = {
+  locale?: HightideTranslationLocales,
+}
+
+type HidetideTranslationExtension<L extends string, T extends TranslationEntries>
+  = PartialTranslationExtension<L, HightideTranslationLocales, T, HightideTranslationEntries>
+
+export function useHightideTranslation<L extends string, T extends TranslationEntries>(
+  extensions?: SingleOrArray<HidetideTranslationExtension<L,T>>,
+  overwrites?: UseHidetideTranslationOverwrites
+) {
+  const { locale: inferredLocale } = useLocale()
+  const locale = overwrites?.locale ?? inferredLocale
+  const translationExtensions = ArrayUtil.resolveSingleOrArray(extensions)
+
+  return combineTranslation<L | HightideTranslationLocales, T & HightideTranslationEntries>([
+    ...translationExtensions,
+    hightideTranslation as HidetideTranslationExtension<L,T>
+  ], locale)
+}
 ```

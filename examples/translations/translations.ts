@@ -17,9 +17,11 @@ export type ExampleTranslationEntries = {
   'nested.itemCount': (values: { count: number }) => string,
   'nested.nested': string,
   'nestedSelectPlural': (values: { gender: string, count: number }) => string,
+  'nWard': (values: { count: number }) => string,
   'passwordStrength': (values: { strength: string }) => string,
   'priceInfo': (values: { price: number, currency: string }) => string,
   'taskDeadline': (values: { deadline: string }) => string,
+  'templateJSEscape': string,
   'userGreeting': (values: { gender: string, name: string }) => string,
   'welcomeMessage': (values: { gender: string, name: string, count: number }) => string,
   'goodbye': string,
@@ -49,7 +51,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'escapeCharacters': `Folgende Zeichen werden mit \\ im resultiernden string ergänzt \`, \\ und \$ \${`,
     'escapedExample': `Folgende Zeichen müssen escaped werden: {, }, '`,
     'nested.itemCount': ({ count }): string => {
-      return TranslationGen.resolveSelect(count, {
+      return TranslationGen.resolvePlural(count, {
         '=0': `Keine Elemente`,
         '=1': `Ein Element`,
         'other': `${count} Elemente`,
@@ -58,21 +60,27 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'nested.nested': `Geschachtelt`,
     'nestedSelectPlural': ({ gender, count }): string => {
       return TranslationGen.resolveSelect(gender, {
-        'male': TranslationGen.resolveSelect(count, {
+        'male': TranslationGen.resolvePlural(count, {
           '=0': `Keine Nachrichten`,
           '=1': `Eine Nachricht`,
           'other': `${count} Nachrichten`,
         }),
-        'female': TranslationGen.resolveSelect(count, {
+        'female': TranslationGen.resolvePlural(count, {
           '=0': `Keine Nachrichten`,
           '=1': `Eine Nachricht`,
           'other': `${count} Nachrichten`,
         }),
-        'other': TranslationGen.resolveSelect(count, {
+        'other': TranslationGen.resolvePlural(count, {
           '=0': `Keine Nachrichten`,
           '=1': `Eine Nachricht`,
           'other': `${count} Nachrichten`,
         }),
+      })
+    },
+    'nWard': ({ count }): string => {
+      return TranslationGen.resolvePlural(count, {
+        '=1': `${count} Station`,
+        'other': `${count} Stationen`,
       })
     },
     'passwordStrength': ({ strength }): string => {
@@ -96,6 +104,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'taskDeadline': ({ deadline }): string => {
       return `Die Aufgabe muss bis ${deadline} erledigt sein.`
     },
+    'templateJSEscape': `\` \${}`,
     'userGreeting': ({ gender, name }): string => {
       return TranslationGen.resolveSelect(gender, {
         'male': `Hallo, ${name}!`,
@@ -111,7 +120,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
         'other': `Willkommen, Person!`,
       })
       _out += ` Du hast `
-      _out += TranslationGen.resolveSelect(count, {
+      _out += TranslationGen.resolvePlural(count, {
         '=0': `keine neuen Nachrichten`,
         '=1': `eine neue Nachricht`,
         'other': `${count} neue Nachrichten`,
@@ -138,7 +147,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     },
     'escapedExample': `The following characters must be escaped: { } '`,
     'nested.itemCount': ({ count }): string => {
-      return TranslationGen.resolveSelect(count, {
+      return TranslationGen.resolvePlural(count, {
         '=0': `No items`,
         '=1': `One item`,
         'other': `${count} items`,
@@ -147,17 +156,17 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     'nested.nested': `Nested`,
     'nestedSelectPlural': ({ gender, count }): string => {
       return TranslationGen.resolveSelect(gender, {
-        'male': TranslationGen.resolveSelect(count, {
+        'male': TranslationGen.resolvePlural(count, {
           '=0': `No messages`,
           '=1': `One message`,
           'other': `${count} messages`,
         }),
-        'female': TranslationGen.resolveSelect(count, {
+        'female': TranslationGen.resolvePlural(count, {
           '=0': `No messages`,
           '=1': `One message`,
           'other': `${count} messages`,
         }),
-        'other': TranslationGen.resolveSelect(count, {
+        'other': TranslationGen.resolvePlural(count, {
           '=0': `No messages`,
           '=1': `One message`,
           'other': `${count} messages`,
@@ -200,7 +209,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
         'other': `Welcome, person!`,
       })
       _out += ` You have `
-      _out += TranslationGen.resolveSelect(count, {
+      _out += TranslationGen.resolvePlural(count, {
         '=0': `no new messages`,
         '=1': `one new message`,
         'other': `${count} new messages`,
