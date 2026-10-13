@@ -64,7 +64,7 @@ The file structure could look like this:
 -> en-US.arb
 ```
 
-Describe the project in a JSON config file. Every field is optional:
+A JSON config file is optional. Pass it with `-c` or `--config`. Every field is optional:
 ```json
 {
   "supportedLocales": ["en-US", "de-DE"],
@@ -75,23 +75,24 @@ Describe the project in a JSON config file. Every field is optional:
 }
 ```
 
-`supportedLocales`, `compileTo`, `name`, and `outputFile` default to the values above. `translationFiles` defaults to an empty list; the sample lists two paths to show that more than one is allowed. `supportedLocales` is the set of locales the project expects. Every placeholder must declare a type of `string`, `int`, or `float`. A missing type is a warning and is read as `string`. Any other type is an error. The build reports every error it finds, and it does not write the output file when any error is present. `compileTo` currently accepts `typescript`. `-n` overrides `name`, and `-o` overrides `outputFile`.
+Without a config file, and for any omitted field, `supportedLocales`, `compileTo`, `name`, and `outputFile` use the values above. `translationFiles` defaults to an empty list; the sample lists two paths to show that more than one is allowed. `supportedLocales` is the set of locales the project expects. Every placeholder must declare a type of `string`, `int`, or `float`. A missing type is a warning and is read as `string`. Any other type is an error. The build reports every error it finds, and it does not write the output file when any error is present. `compileTo` currently accepts `typescript`. `-n` overrides `name`, and `-o` overrides `outputFile`.
 
 `int` and `float` are `number` parameters in the generated functions. `TranslationGen.round` rounds those values before they are inserted into the translation string.
 
 Pass one or more `.arb` files or directories. Every `.arb` file under a directory is included. Paths on the command replace `translationFiles` when you provide any.
 
 ```bash
+npx build-intl ./locales ./shared/locales
 npx build-intl --config ./intl.config.json ./locales ./shared/locales
 ```
 
 An existing output file is overwritten. `--dry-run` prints the diff and does not write the file.
 
 ```
-Usage: build-intl --config <path> [options] [location ...]
+Usage: build-intl [options] [location ...]
 
 Options:
-  -c, --config <path>   JSON configuration file
+  -c, --config <path>   JSON configuration file (optional)
   -o, --out <file>      Output file (overrides config outputFile)
   -n, --name <name>     Exported translation name (overrides config name)
   --dry-run             Print the output diff without writing the file

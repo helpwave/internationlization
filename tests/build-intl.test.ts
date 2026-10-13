@@ -5,7 +5,7 @@ import { TranslationGen } from '../src'
 import { parseBuildIntlArgs, resolveExportName } from '../src/scripts/cli-args'
 import { collectTranslations } from '../src/scripts/collect-translations'
 import { compileTranslations } from '../src/scripts/compile-typescript'
-import { loadIntlConfig, type IntlConfig } from '../src/scripts/intl-config'
+import { defaultIntlConfig, loadIntlConfig, type IntlConfig } from '../src/scripts/intl-config'
 import { describeOutputChange } from '../src/scripts/output-diff'
 
 const directories: string[] = []
@@ -99,13 +99,11 @@ describe('loadIntlConfig', () => {
     writeJson(configPath, { supportedLocales: ['fr-FR'] })
     writeJson(path.join(directory, 'empty.json'), {})
 
-    expect(loadIntlConfig(path.join(directory, 'empty.json'))).toEqual({
-      supportedLocales: ['en-US', 'de-DE'],
-      compileTo: 'typescript',
-      name: 'appTranslation',
-      outputFile: './i18n/translations.ts',
-      translationFiles: [],
-    })
+    expect(loadIntlConfig(path.join(directory, 'empty.json'))).toEqual(defaultIntlConfig())
+    const parsed = parseBuildIntlArgs(['./locales', './shared/locales'])
+    expect(parsed.configPath).toBeUndefined()
+    expect(parsed.locations).toEqual(['./locales', './shared/locales'])
+    expect(parsed.errors).toEqual([])
     expect(loadIntlConfig(configPath)).toEqual({
       supportedLocales: ['fr-FR'],
       compileTo: 'typescript',

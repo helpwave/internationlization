@@ -4,19 +4,19 @@ import path from 'path'
 import { parseBuildIntlArgs, resolveExportName } from './cli-args'
 import { collectTranslations, type IntlDiagnostic } from './collect-translations'
 import { compileTranslations } from './compile-typescript'
-import { loadIntlConfig, type IntlConfig } from './intl-config'
+import { defaultIntlConfig, loadIntlConfig, type IntlConfig } from './intl-config'
 import { describeOutputChange } from './output-diff'
 
 function printHelp(): void {
   console.info(`
-Usage: build-intl --config <path> [options] [location ...]
+Usage: build-intl [options] [location ...]
 
 Collects .arb files from the given files and directories and compiles them.
 Repeat location to pass more than one file or directory.
 When no locations are given, translationFiles from the config is used.
 
 Options:
-  -c, --config <path>   JSON configuration file
+  -c, --config <path>   JSON configuration file (optional)
   -o, --out <file>      Output file (overrides config outputFile)
   -n, --name <name>     Exported translation name (overrides config name)
   --dry-run             Print the output diff without writing the file
@@ -31,7 +31,7 @@ Configuration file:
     "translationFiles": []
   }
 
-Omitted fields use those defaults.
+--config is optional. Without a config file, and for any omitted field, those defaults are used.
 List one or more paths in translationFiles, or pass them after the options.
 Existing output files are overwritten.
 Each .arb file must set @@locale to a supported locale.
@@ -65,15 +65,9 @@ function main(): void {
     for (const message of args.errors) console.error(`error: ${message}`)
     process.exit(1)
   }
-  if (!args.configPath) {
-    console.error('error: Missing required option --config <path>.')
-    printHelp()
-    process.exit(1)
-  }
-
   let config: IntlConfig
   try {
-    config = loadIntlConfig(args.configPath)
+    config = args.configPath === undefined ? defaultIntlConfig() : loadIntlConfig(args.configPath)
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error)
     console.error(`error: ${reason}`)

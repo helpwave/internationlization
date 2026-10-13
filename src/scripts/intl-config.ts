@@ -77,6 +77,16 @@ function readTranslationFiles(value: unknown): string[] {
   return files
 }
 
+export function defaultIntlConfig(): IntlConfig {
+  return {
+    supportedLocales: [...DEFAULT_SUPPORTED_LOCALES],
+    compileTo: DEFAULT_COMPILE_TARGET,
+    name: DEFAULT_EXPORT_NAME,
+    outputFile: DEFAULT_OUTPUT_FILE,
+    translationFiles: [],
+  }
+}
+
 export function loadIntlConfig(configPath: string): IntlConfig {
   const resolved = path.resolve(configPath)
   if (!fs.existsSync(resolved)) {
@@ -95,15 +105,16 @@ export function loadIntlConfig(configPath: string): IntlConfig {
     throw new Error('Configuration file must contain a JSON object.')
   }
 
+  const defaults = defaultIntlConfig()
   return {
     supportedLocales: parsed.supportedLocales === undefined
-      ? [...DEFAULT_SUPPORTED_LOCALES]
+      ? defaults.supportedLocales
       : readLocaleList(parsed.supportedLocales),
     compileTo: parsed.compileTo === undefined
-      ? DEFAULT_COMPILE_TARGET
+      ? defaults.compileTo
       : readCompileTarget(parsed.compileTo),
-    name: readStringSetting(parsed.name, 'name', DEFAULT_EXPORT_NAME),
-    outputFile: readStringSetting(parsed.outputFile, 'outputFile', DEFAULT_OUTPUT_FILE),
+    name: readStringSetting(parsed.name, 'name', defaults.name),
+    outputFile: readStringSetting(parsed.outputFile, 'outputFile', defaults.outputFile),
     translationFiles: readTranslationFiles(parsed.translationFiles),
   }
 }
