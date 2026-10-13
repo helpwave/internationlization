@@ -9,6 +9,7 @@ function escapeForTemplateJS(s: string): string {
 
 type CompileContextResult = {
   numberParam?: string,
+  numericFormats?: Record<string, 'int' | 'float'>,
   inNode: boolean,
   indentLevel: number,
   isOnlyText: boolean,
@@ -34,6 +35,12 @@ export function compileToCode(
     return ' '.repeat(level * 2)
   }
 
+  function formatValue(name: string): string {
+    const kind = context.numericFormats?.[name]
+    if (kind === 'int') return `TranslationGen.round(${name})`
+    return name
+  }
+
   function flushCurrent() {
     if (currentLine) {
       if (context.inNode) {
@@ -52,13 +59,13 @@ export function compileToCode(
       break
     case 'NumberField':
       if (context.numberParam) {
-        currentLine += `$\{${context.numberParam}}`
+        currentLine += `$\{${formatValue(context.numberParam)}}`
       } else {
         currentLine += `{${context.numberParam}}`
       }
       break
     case 'SimpleReplace':
-      currentLine += `$\{${node.variableName}}`
+      currentLine += `$\{${formatValue(node.variableName)}}`
       break
     case 'Node': {
       for (const partNode of node.parts) {

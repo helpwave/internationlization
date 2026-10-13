@@ -1,4 +1,5 @@
 {
+  "@@locale": "en-US",
   "userGreeting": "{gender, select, male{Hello, {name}!} female{Hello, {name}!} other{Hello, person!}}",
   "@userGreeting": {
     "placeholders": {
@@ -34,7 +35,7 @@
         "type": "string"
       },
       "count": {
-        "type": "number"
+        "type": "int"
       }
     }
   },
@@ -42,7 +43,7 @@
   "@priceInfo": {
     "placeholders": {
       "price": {
-        "type": "number"
+        "type": "float"
       },
       "currency": {}
     }
@@ -61,7 +62,7 @@
     "placeholders": {
       "gender": {},
       "count": {
-        "type": "number"
+        "type": "int"
       }
     }
   }

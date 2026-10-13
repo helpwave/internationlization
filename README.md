@@ -5,11 +5,12 @@ helpwaves package for internationalization that creates localized and typesafe t
 Create a `.arb` file with your translations:
 ```json
 {
+  "@@locale": "en-US",
   "priceInfo": "The price is {price}{currency, select, usd{$USD} eur{€} other{}}.",
   "@priceInfo": {
     "placeholders": {
       "price": {
-        "type": "number"
+        "type": "float"
       },
       "currency": {}
     }
@@ -43,6 +44,16 @@ t("priceInfo", { price, currency })
 npm install -D @helpwave/internationalization
 ```
 #### Create local ARB files
+Each file sets its locale with `@@locale`. An optional `@@prefix` prefixes every key in that file, so a prefix of `test` makes `name` available as `test.name`.
+
+```json
+{
+  "@@locale": "en-US",
+  "@@prefix": "test",
+  "name": "Name"
+}
+```
+
 The file structure could look like this:
 ```
 /locales
@@ -53,22 +64,42 @@ The file structure could look like this:
 -> en-US.arb
 ```
 
-Then run:
-```bash
-npx build-intl 
+A JSON config file is optional. Pass it with `-c` or `--config`. Every field is optional:
+```json
+{
+  "supportedLocales": ["en-US", "de-DE"],
+  "compileTo": "typescript",
+  "name": "appTranslation",
+  "outputFile": "./i18n/translations.ts",
+  "translationFiles": ["./locales", "./shared/locales"]
+}
 ```
 
-By default `./locales` will be translated to `./i18n`, the input directory and output file are configurable with:
+Without a config file, and for any omitted field, `supportedLocales`, `compileTo`, `name`, and `outputFile` use the values above. `translationFiles` defaults to an empty list; the sample lists two paths to show that more than one is allowed. `supportedLocales` is the set of locales the project expects. Every placeholder must declare a type of `string`, `int`, or `float`. A missing type is a warning and is read as `string`. Any other type is an error. The build reports every error it finds, and it does not write the output file when any error is present. `compileTo` currently accepts `typescript`. `-n` overrides `name`, and `-o` overrides `outputFile`.
+
+`int` and `float` are `number` parameters in the generated functions. `TranslationGen.round` rounds `int` values before they are inserted into the translation string. `float` values are inserted as given.
+
+Pass one or more `.arb` files or directories. Every `.arb` file under a directory is included. Paths on the command replace `translationFiles` when you provide any.
+
+```bash
+npx build-intl ./locales ./shared/locales
+npx build-intl --config ./intl.config.json ./locales ./shared/locales
 ```
-Usage: i18n-compile [options]
+
+An existing output file is overwritten. `--dry-run` prints the diff and does not write the file.
+
+```
+Usage: build-intl [options] [location ...]
 
 Options:
-  -i, --in <dir>        Input directory containing .arb files
-  -o, --out <file>      Output file (e.g. ./i18n/translations.ts)
-  -f, --force           Overwrite output without prompt
+  -c, --config <path>   JSON configuration file (optional)
+  -o, --out <file>      Output file (overrides config outputFile)
+  -n, --name <name>     Exported translation name (overrides config name)
+  --dry-run             Print the output diff without writing the file
   -h, --help            Show this help message
-`)
 ```
+
+Keys or placeholder types that differ between locales are reported as warnings.
 
 
 ## Tests
@@ -80,7 +111,7 @@ Example translation files and the resulting translation can be found in the [exa
 Rebuild the examples:
 ```bash
 npm run build
-node dist/scripts/compile-arb.js --force -i ./examples/locales -o ./examples/translations/translations.ts -n "exampleTranslation"
+node dist/scripts/build-intl.js --config ./examples/intl.config.json
 ```
 
 React hook example:
