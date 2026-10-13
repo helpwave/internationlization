@@ -1,0 +1,7 @@
+{
+  "supportedLocales": ["de-DE", "en-US", "fr-FR"],
+  "compileTo": "typescript",
+  "name": "exampleTranslation",
+  "outputFile": "./examples/translations/translations.ts",
+  "translationFiles": ["./examples/locales"]
+}

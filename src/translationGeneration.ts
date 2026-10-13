@@ -21,7 +21,12 @@ function resolvePlural(
   return typeof handler === 'function' ? handler() : handler
 }
 
+function round(value: number): string {
+  return String(Math.round(value))
+}
+
 export const TranslationGen = {
   resolveSelect,
   resolvePlural,
+  round,
 }

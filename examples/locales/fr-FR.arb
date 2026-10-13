@@ -1,4 +1,5 @@
 {
+  "@@locale": "fr-FR",
   "hello": "Bonjour",
   "goodbye": "Au revoir",
   "thankYou": "Merci",
