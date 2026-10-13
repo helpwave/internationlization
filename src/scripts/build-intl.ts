@@ -36,7 +36,7 @@ List one or more paths in translationFiles, or pass them after the options.
 Existing output files are overwritten.
 Each .arb file must set @@locale to a supported locale.
 @@prefix optionally prefixes every key in that file (prefix "test" exposes "name" as "test.name").
-Placeholder types other than string, int, and float are errors. The output file is not written when the build reports an error.
+Every placeholder must declare a type of string, int, or float. A missing type is a warning and is read as string. Any other type is an error. The output file is not written when the build reports an error.
 int and float are number parameters. Their values are rounded before they are inserted into the string.
 Keys or placeholder types that differ between locales are reported as warnings.
 `)

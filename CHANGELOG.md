@@ -13,6 +13,7 @@ and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Translation inputs can be `.arb` files or directories
 - Warnings for inconsistent keys and inconsistent placeholder types
 - Placeholder types other than `string`, `int`, and `float` are errors. The build reports every error and does not write the output file when any error is present
+- Placeholder types are no longer inferred from the variable name. A placeholder without a type warns and is read as `string`
 
 ### Changed
 - Locale identity comes from `@@locale` instead of the file name

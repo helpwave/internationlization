@@ -254,7 +254,7 @@ describe('collectTranslations', () => {
     })
     expect(collected.catalog['en-US'].items).toEqual({
       type: 'func',
-      params: [{ name: 'count', typing: 'number', numeric: 'int' }],
+      params: [{ name: 'count', typing: 'string' }],
       value: '{count}',
     })
     const unsupported = collected.diagnostics.filter(item => item.message.includes('is not supported'))
@@ -265,7 +265,11 @@ describe('collectTranslations', () => {
     expect(collected.diagnostics).toEqual(expect.arrayContaining([
       expect.objectContaining({
         level: 'warning',
-        message: expect.stringContaining('was considered an int'),
+        message: expect.stringContaining('Placeholder [count] of [items]'),
+      }),
+      expect.objectContaining({
+        level: 'warning',
+        message: expect.stringContaining('Interpreting it as string.'),
       }),
     ]))
     expect(collected.diagnostics.some(item => item.message.includes('Type "int"'))).toBe(false)

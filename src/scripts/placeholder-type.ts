@@ -13,11 +13,6 @@ const SUPPORTED_TYPES = ['string', 'int', 'float'] as const
 
 type SupportedType = typeof SUPPORTED_TYPES[number]
 
-const NAME_TYPE_HINTS: { type: SupportedType, names: string[] }[] = [
-  { type: 'int', names: ['count', 'amount', 'length', 'number'] },
-  { type: 'string', names: ['name'] },
-]
-
 function toFunctionType(typeName: SupportedType): ResolvedPlaceholderType {
   if (typeName === 'int') return { typing: 'number', numeric: 'int' }
   if (typeName === 'float') return { typing: 'number', numeric: 'float' }
@@ -43,16 +38,7 @@ export function resolvePlaceholderType(
   const typing = rawType?.trim() ?? ''
 
   if (!typing) {
-    const hint = NAME_TYPE_HINTS.find(entry => entry.names.includes(variableName))
-    if (hint) {
-      const article = /^[aeiou]/i.test(hint.type) ? 'an' : 'a'
-      report('warning', [
-        `Variable [${variableName}] of [${context.key}] in file ${context.filePath}`,
-        `was considered ${article} ${hint.type} because the name is one of ${hint.names.join(', ')}.`,
-        'Set the type explicitly or rename it to avoid this warning.',
-      ].join(' '))
-      return toFunctionType(hint.type)
-    }
+    report('warning', `Placeholder [${variableName}] of [${context.key}] in file ${context.filePath} has no type. Interpreting it as string.`)
     return { typing: 'string' }
   }
 
