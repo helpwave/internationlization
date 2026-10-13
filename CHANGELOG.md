@@ -23,7 +23,7 @@ and adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - The config accepts `name`, `outputFile`, and `translationFiles`
 - `build-intl` accepts multiple file or directory paths, overwrites the output file, and `--dry-run` prints that diff
 - `-c` / `--config` is optional. Without it, the build uses the same defaults as a config with omitted fields
-- `int` and `float` placeholders are `number` parameters and are rounded before they are inserted into the translation string
+- `int` and `float` placeholders are `number` parameters. `int` values are rounded before they are inserted into the translation string. `float` values are inserted as given
 
 ## [0.4.0] - 2025-11-26
 

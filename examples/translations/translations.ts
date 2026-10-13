@@ -93,7 +93,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     },
     'priceInfo': ({ price, currency }): string => {
       let _out: string = ''
-      _out += `Der Preis beträgt ${TranslationGen.round(price)}`
+      _out += `Der Preis beträgt ${price}`
       _out += TranslationGen.resolveSelect(currency, {
         'usd': `\$USD`,
         'eur': `€`,
@@ -183,7 +183,7 @@ export const exampleTranslation: Translation<ExampleTranslationLocales, Partial<
     },
     'priceInfo': ({ price, currency }): string => {
       let _out: string = ''
-      _out += `The price is ${TranslationGen.round(price)}`
+      _out += `The price is ${price}`
       _out += TranslationGen.resolveSelect(currency, {
         'usd': `\$USD`,
         'eur': `€`,

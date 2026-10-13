@@ -37,7 +37,7 @@ export function compileToCode(
 
   function formatValue(name: string): string {
     const kind = context.numericFormats?.[name]
-    if (kind === 'int' || kind === 'float') return `TranslationGen.round(${name})`
+    if (kind === 'int') return `TranslationGen.round(${name})`
     return name
   }
 

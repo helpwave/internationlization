@@ -77,7 +77,7 @@ A JSON config file is optional. Pass it with `-c` or `--config`. Every field is 
 
 Without a config file, and for any omitted field, `supportedLocales`, `compileTo`, `name`, and `outputFile` use the values above. `translationFiles` defaults to an empty list; the sample lists two paths to show that more than one is allowed. `supportedLocales` is the set of locales the project expects. Every placeholder must declare a type of `string`, `int`, or `float`. A missing type is a warning and is read as `string`. Any other type is an error. The build reports every error it finds, and it does not write the output file when any error is present. `compileTo` currently accepts `typescript`. `-n` overrides `name`, and `-o` overrides `outputFile`.
 
-`int` and `float` are `number` parameters in the generated functions. `TranslationGen.round` rounds those values before they are inserted into the translation string.
+`int` and `float` are `number` parameters in the generated functions. `TranslationGen.round` rounds `int` values before they are inserted into the translation string. `float` values are inserted as given.
 
 Pass one or more `.arb` files or directories. Every `.arb` file under a directory is included. Paths on the command replace `translationFiles` when you provide any.
 

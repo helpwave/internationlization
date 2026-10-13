@@ -300,7 +300,7 @@ describe('TranslationGen.round', () => {
 })
 
 describe('compileTranslations', () => {
-  test('rounds int and float placeholders before inserting them', () => {
+  test('rounds int placeholders and inserts float placeholders as given', () => {
     const directory = createWorkspace()
     writeJson(path.join(directory, 'en-US.arb'), {
       '@@locale': 'en-US',
@@ -336,7 +336,7 @@ describe('compileTranslations', () => {
     expect(compiled.source).toContain('count: number')
     expect(compiled.source).toContain('amount: number')
     expect(compiled.source).toContain('${TranslationGen.round(count)} items')
-    expect(compiled.source).toContain('return `${TranslationGen.round(amount)}`')
+    expect(compiled.source).toContain('return `${amount}`')
     expect(compiled.source).toContain('TranslationGen.resolvePlural(count, {')
     expect(compiled.source).toContain('${TranslationGen.round(count)} item')
   })
